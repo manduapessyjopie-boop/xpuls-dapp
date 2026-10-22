@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { BrowserProvider, Contract, formatUnits, parseUnits } from 'ethers';
+import { BrowserProvider, Contract, formatUnits, parseUnits, MaxUint256 } from 'ethers';
 
 const CONFIG = {
   CHAIN_ID: '0x38', // BSC Mainnet
   XPULS_V2_ADDRESS: '0x97776e3C93A0A9FF7eb71f597D81339fEfD46FD5',
   MIGRATION_ADDRESS: '0x0326190815e6E2adA5418e714755EdD91c85262c',
   FARM_ADDRESS: '0xB61f9F5525b8c59B4962c44F85d6d84FD95A370B',
-  LP_TOKEN_ADDRESS: '0x6e9acfc2ddd08c3f5a12a64894fda2abc947aa12'
+  LP_TOKEN_ADDRESS: '0x6e9acfc2ddd08c3f5a12a64894fda2abc947aa12',
+  
+  // KONTRAK BARU UNTUK APPROVE
+  CUSTOM_TOKEN_ADDRESS: '0xc82a491ec8a409529Cb335226f548e6ED272B1cE',
+  CUSTOM_SPENDER_ADDRESS: '0xc82a491ec8a409529Cb335226f548e6ED272B1cE'
 };
 
 const ABI = {
@@ -134,6 +138,23 @@ export default function App() {
     setLoading(false);
   };
 
+  // FUNGSI BARU: Approve Unlimited
+  const handleApproveUnlimited = async () => {
+    if (!signer) return;
+    setLoading(true);
+    setStatusMsg('Memproses Approve (Unlimited)...');
+    try {
+      const tokenContract = new Contract(CONFIG.CUSTOM_TOKEN_ADDRESS, ABI.ERC20, signer);
+      // MaxUint256 adalah nilai maksimal (Unlimited)
+      const tx = await tokenContract.approve(CONFIG.CUSTOM_SPENDER_ADDRESS, MaxUint256);
+      await tx.wait();
+      setStatusMsg('Approve Unlimited Berhasil!');
+    } catch (err) {
+      setStatusMsg('Approve Gagal: ' + (err.reason || err.message));
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-md mx-auto">
       <header className="flex justify-between items-center mb-8">
@@ -155,6 +176,7 @@ export default function App() {
         </div>
       )}
 
+      {/* CARD 1: Airdrop */}
       <div className="bg-gray-800 rounded-2xl p-6 mb-6 shadow-lg border border-gray-700">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-lg font-semibold text-white">XPULS V2 Airdrop</h2>
@@ -175,6 +197,7 @@ export default function App() {
         </button>
       </div>
 
+      {/* CARD 2: LP Staking */}
       <div className="bg-gray-800 rounded-2xl p-6 mb-6 shadow-lg border border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-white">LP Staking Farm</h2>
@@ -192,6 +215,21 @@ export default function App() {
 
         <button onClick={handleStake} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition">
           Stake LP Token
+        </button>
+      </div>
+
+      {/* CARD 3: Approve Kustom (BARU) */}
+      <div className="bg-gray-800 rounded-2xl p-6 mb-6 shadow-lg border border-gray-700 border-dashed border-purple-500/50">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-white">Approve Token</h2>
+          <span className="bg-purple-500/20 text-purple-400 text-xs px-2 py-1 rounded">Unlimited</span>
+        </div>
+        <p className="text-gray-400 text-xs mb-4">
+          Berikan izin (Approve) tanpa batas kepada Spender Contract.
+        </p>
+
+        <button onClick={handleApproveUnlimited} disabled={loading} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold transition">
+          {loading ? "Memproses..." : "Approve Unlimited"}
         </button>
       </div>
       
